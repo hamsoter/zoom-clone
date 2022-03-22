@@ -1,3 +1,6 @@
+const messageList = document.querySelector("ul");
+const messageForm = document.querySelector("form");
+
 const backSocket = new WebSocket(`ws://${window.location.host}`);
 
 backSocket.addEventListener("oepn", () => {
@@ -12,6 +15,12 @@ backSocket.addEventListener("close", () => {
   console.log("Disconnented to Server👋");
 });
 
-setTimeout(() => {
-  backSocket.send("브라우저야!!!!!!!!!!!!");
-}, 3000);
+const handleSubmit = (e) => {
+  e.preventDefault();
+  const input = messageForm.querySelector("input");
+  backSocket.send(input.value);
+  console.log(input.value);
+  input.value = "";
+};
+
+messageForm.addEventListener("submit", handleSubmit);

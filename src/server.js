@@ -27,19 +27,18 @@ const server = http.createServer(app);
 // http server위에 websocket server 생성
 const wss = new WebSocketServer({ server });
 
-// function handleConnection(frontSocket) {
-//   console.log(frontSocket);
-// }
+// 접속된 소켓을 담을 공간
+const sockets = [];
 
 wss.on("connection", (frontSocket) => {
+  sockets.push(frontSocket);
   console.log("connented to Browser👀");
 
-  //브라우저를 닫을시
   frontSocket.on("close", () => console.log("Disconnented from the Browser👋"));
 
-  // 메세지를 받는 이벤트
+  // 접속중인 모든 소켓에 메세지를 전송
   frontSocket.on("message", (message) => {
-    console.log("message: " + message.toString("utf-8") + " from the Server");
+    sockets.forEach((aSocket) => aSocket.send(message.toString("utf-8")));
   });
   // message를 전송
   frontSocket.send("후타바안즈 귀여워");
