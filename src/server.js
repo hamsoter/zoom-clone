@@ -26,5 +26,11 @@ const server = http.createServer(app);
 // http server위에 websocket server 생성
 const wss = new WebSocketServer({ server });
 
+function handleConnection(frontSocket) {
+  console.log(frontSocket);
+}
+
+wss.on("connection", handleConnection);
+
 // 같은 포트 공유
 server.listen(3000, handlerListen);
