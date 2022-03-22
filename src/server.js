@@ -47,12 +47,13 @@ wss.on("connection", (frontSocket) => {
         sockets.forEach((aSocket) =>
           aSocket.send(`${frontSocket.nickname}: ${message.payload}`)
         );
+        break;
+
       case "nickname":
         frontSocket["nickname"] = message.payload;
+        break;
     }
   });
-  // message를 전송
-  frontSocket.send("후타바안즈 귀여워");
 });
 
 // 같은 포트 공유
