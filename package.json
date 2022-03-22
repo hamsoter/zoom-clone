@@ -18,6 +18,7 @@
   "dependencies": {
     "@babel/preset-env": "^7.16.11",
     "express": "^4.17.3",
-    "pug": "^3.0.2"
+    "pug": "^3.0.2",
+    "ws": "^8.5.0"
   }
 }
