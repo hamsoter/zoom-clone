@@ -1,7 +1,7 @@
 import express from "express";
 import http from "http";
 import { WebSocketServer } from "ws";
-import path, { dirname } from "path";
+import path, { dirname, parse } from "path";
 import { Socket } from "dgram";
 
 const app = express();
@@ -34,11 +34,22 @@ wss.on("connection", (frontSocket) => {
   sockets.push(frontSocket);
   console.log("connented to Browser👀");
 
+  frontSocket["nickname"] = "Anon";
+
   frontSocket.on("close", () => console.log("Disconnented from the Browser👋"));
 
   // 접속중인 모든 소켓에 메세지를 전송
-  frontSocket.on("message", (message) => {
-    sockets.forEach((aSocket) => aSocket.send(message.toString("utf-8")));
+  frontSocket.on("message", (msg) => {
+    const message = JSON.parse(msg);
+
+    switch (message.type) {
+      case "new_message":
+        sockets.forEach((aSocket) =>
+          aSocket.send(`${frontSocket.nickname}: ${message.payload}`)
+        );
+      case "nickname":
+        frontSocket["nickname"] = message.payload;
+    }
   });
   // message를 전송
   frontSocket.send("후타바안즈 귀여워");
