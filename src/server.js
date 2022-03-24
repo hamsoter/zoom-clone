@@ -1,8 +1,9 @@
 import express from "express";
 import http from "http";
-import { WebSocketServer } from "ws";
+// import { WebSocketServer } from "ws";
 import path, { dirname, parse } from "path";
-import { Socket } from "dgram";
+
+import { Server } from "socket.io";
 
 const app = express();
 const __dirname = path.resolve();
@@ -23,38 +24,18 @@ app.get("/*", (req, res) => res.redirect("/"));
 const handlerListen = () => console.log(`Listening on ws://localhost:3000`);
 
 // http server
-const server = http.createServer(app);
-// http server위에 websocket server 생성
-const wss = new WebSocketServer({ server });
+const httpServer = http.createServer(app);
+// const io = socketIO(server);
+const wsServer = new Server(httpServer);
 
-// 접속된 소켓을 담을 공간
-const sockets = [];
-
-wss.on("connection", (frontSocket) => {
-  sockets.push(frontSocket);
-  console.log("connented to Browser👀");
-
-  frontSocket["nickname"] = "Anon";
-
-  frontSocket.on("close", () => console.log("Disconnented from the Browser👋"));
-
-  // 접속중인 모든 소켓에 메세지를 전송
-  frontSocket.on("message", (msg) => {
-    const message = JSON.parse(msg);
-
-    switch (message.type) {
-      case "new_message":
-        sockets.forEach((aSocket) =>
-          aSocket.send(`${frontSocket.nickname}: ${message.payload}`)
-        );
-        break;
-
-      case "nickname":
-        frontSocket["nickname"] = message.payload;
-        break;
-    }
+wsServer.on("connection", (socket) => {
+  socket.on("enter_room", (msg, done) => {
+    console.log(msg);
+    setTimeout(() => {
+      done();
+    }, 2000);
   });
 });
 
 // 같은 포트 공유
-server.listen(3000, handlerListen);
+httpServer.listen(3000, handlerListen);
