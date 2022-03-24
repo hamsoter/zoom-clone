@@ -74,14 +74,32 @@ const handleRoomSubmit = (e) => {
 
 form.addEventListener("submit", handleRoomSubmit);
 
-socket.on("welcome", (nickname) => {
+socket.on("welcome", (nickname, newCount) => {
+  const h3 = room.querySelector("h3");
+  h3.innerText = `# ${roomName} (${newCount})`;
   addMessage(`${nickname}(이)가 ${roomName}에 입장했습니다.`);
 });
 
-socket.on("bye", (nickname) => {
+socket.on("bye", (nickname, newCount) => {
+  const h3 = room.querySelector("h3");
+  h3.innerText = `# ${roomName} (${newCount})`;
   addMessage(`${nickname}(이)가 ${roomName}을(를) 떠났습니다.`);
 });
 
 socket.on("new_message", (msg, nickname) => {
   addMessage(`${nickname}: ${msg}`);
+});
+
+socket.on("room_change", (rooms) => {
+  const roomList = welcome.querySelector("ul");
+  roomList.innerHTML = "";
+  if (rooms.length === 0) {
+    roomList.innerHTML = "";
+    return;
+  }
+  rooms.forEach((room) => {
+    const li = document.createElement("li");
+    li.innerText = room;
+    roomList.append(li);
+  });
 });

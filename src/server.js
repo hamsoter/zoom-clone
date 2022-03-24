@@ -10,14 +10,9 @@ const __dirname = path.resolve();
 
 // privite + public rooms
 const publicRoomsHandler = () => {
-  const {
-    socket: {
-      adapter: { side, rooms },
-    },
-  } = wsServer;
   // private room
-  // const sids = wsServer.sockets.adapter.sids;
-  // const rooms = wsServer.sockets.adapter.rooms;
+  const sids = wsServer.sockets.adapter.sids;
+  const rooms = wsServer.sockets.adapter.rooms;
 
   const publicRooms = [];
 
@@ -27,6 +22,11 @@ const publicRoomsHandler = () => {
     }
   });
   return publicRooms;
+};
+
+// 방 인원수 체크
+const countRoom = (roomName) => {
+  return wsServer.sockets.adapter.rooms.get(roomName)?.size;
 };
 
 // setting
@@ -67,14 +67,24 @@ wsServer.on("connection", (socket) => {
   socket.on("enter_room", ({ roomName }, done) => {
     socket.join(roomName);
     done(socket.nickname);
-    socket.to(roomName).emit("welcome", socket.nickname);
+
+    // 데이터를 하나의 소켓에 전송
+    socket.to(roomName).emit("welcome", socket.nickname, countRoom(roomName));
+
+    // 데이터를(현재 public room) 모든 소켓에게 전송
+    wsServer.sockets.emit("room_change", publicRoomsHandler());
   });
 
-  // 퇴장
+  // 퇴장 (소켓이 방을 떠나기 직전)
   socket.on("disconnecting", () => {
     socket.rooms.forEach((room) => {
-      socket.to(room).emit("bye", socket.nickname);
+      socket.to(room).emit("bye", socket.nickname, countRoom(room) - 1);
     });
+  });
+
+  // 퇴장한 후
+  socket.on("disconnect", () => {
+    wsServer.sockets.emit("room_change", publicRoomsHandler());
   });
 
   socket.on("new_message", (msg, roomName, done) => {
