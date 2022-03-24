@@ -8,6 +8,27 @@ import { Server } from "socket.io";
 const app = express();
 const __dirname = path.resolve();
 
+// privite + public rooms
+const publicRoomsHandler = () => {
+  const {
+    socket: {
+      adapter: { side, rooms },
+    },
+  } = wsServer;
+  // private room
+  // const sids = wsServer.sockets.adapter.sids;
+  // const rooms = wsServer.sockets.adapter.rooms;
+
+  const publicRooms = [];
+
+  rooms.forEach((_, key) => {
+    if (sids.get(key) === undefined) {
+      publicRooms.push(key);
+    }
+  });
+  return publicRooms;
+};
+
 // setting
 app.set("view engine", "pug");
 app.set("views", __dirname + "/src/views");
@@ -38,6 +59,7 @@ wsServer.on("connection", (socket) => {
 
   console.log(socket.nickname);
   socket.onAny((e) => {
+    console.log(wsServer.sockets.adapter);
     console.log("socket event: ", e);
   });
 

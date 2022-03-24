@@ -31,9 +31,11 @@ const handleNicknameSubmit = (e) => {
   const input = room.querySelector("#nickname input");
   const value = input.value;
 
-  // 나한테만 보이는 이유가...?
+  // 나한테만 보이는 이유가...? emit이라서군아
   socket.emit("nickname", input.value, () => {
-    addMessage(`닉네임 변경!( ﾉ ﾟｰﾟ)ﾉ ${prevNickname} => ${value}`);
+    addMessage(
+      `당신의 닉네임은 변경되었다! ( ﾉ ﾟｰﾟ)ﾉ ( ${prevNickname} => ${value} )`
+    );
     prevNickname = value;
   });
   input.value = "";
@@ -53,6 +55,9 @@ const showRoom = (anonNickname) => {
 
   msgForm.addEventListener("submit", handleMessageSubmit);
   nicknameForm.addEventListener("submit", handleNicknameSubmit);
+
+  // 입장자만 보임
+  addMessage(`당신은 ${roomName}에 입장했습니다. `);
 };
 
 const handleRoomSubmit = (e) => {
