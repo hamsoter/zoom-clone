@@ -12,7 +12,13 @@ html(lang="en")
     main 
       div#welcome 
         form
-          input(type="text", required, name="" placeholder="방 이름")
+          input(type="text", required, placeholder="방 이름")
           button 입장
+      div#room 
+        h3
+        ul
+        form
+          input(type="text", name="" placeholder="메세지 보내기")
+          button 전송
     script(src="/socket.io/socket.io.js") 
     script(src="/public/js/app.js") 

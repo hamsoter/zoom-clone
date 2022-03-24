@@ -8,8 +8,6 @@ import { Server } from "socket.io";
 const app = express();
 const __dirname = path.resolve();
 
-console.log("hello");
-
 // setting
 app.set("view engine", "pug");
 app.set("views", __dirname + "/src/views");
@@ -29,11 +27,14 @@ const httpServer = http.createServer(app);
 const wsServer = new Server(httpServer);
 
 wsServer.on("connection", (socket) => {
-  socket.on("enter_room", (msg, done) => {
-    console.log(msg);
-    setTimeout(() => {
-      done();
-    }, 2000);
+  socket.onAny((e) => {
+    console.log("socket event: ", e);
+  });
+  socket.on("enter_room", ({ roomName }, done) => {
+    socket.join(roomName);
+    done(roomName);
+    console.log(roomName);
+    socket.to(roomName).emit("welcome");
   });
 });
 
