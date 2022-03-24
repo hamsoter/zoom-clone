@@ -26,7 +26,17 @@ const httpServer = http.createServer(app);
 // const io = socketIO(server);
 const wsServer = new Server(httpServer);
 
+// 임의의 6자리 코드 생성
+const randomHash = () => {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+};
+
 wsServer.on("connection", (socket) => {
+  const randomCode = randomHash();
+  // 초기 닉네임
+  socket["nickname"] = `손님#${randomCode}`;
+
+  console.log(socket.nickname);
   socket.onAny((e) => {
     console.log("socket event: ", e);
   });
@@ -34,20 +44,24 @@ wsServer.on("connection", (socket) => {
   // 입장
   socket.on("enter_room", ({ roomName }, done) => {
     socket.join(roomName);
-    done(roomName);
-    console.log(roomName);
-    socket.to(roomName).emit("welcome");
+    done(socket.nickname);
+    socket.to(roomName).emit("welcome", socket.nickname);
   });
 
   // 퇴장
   socket.on("disconnecting", () => {
     socket.rooms.forEach((room) => {
-      socket.to(room).emit("bye");
+      socket.to(room).emit("bye", socket.nickname);
     });
   });
 
   socket.on("new_message", (msg, roomName, done) => {
-    socket.to(roomName).emit("new_message", msg);
+    socket.to(roomName).emit("new_message", msg, socket.nickname);
+    done();
+  });
+
+  socket.on("nickname", (nickname, done) => {
+    socket["nickname"] = nickname;
     done();
   });
 });
