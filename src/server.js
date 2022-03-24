@@ -1,7 +1,8 @@
 import express from "express";
 import http from "http";
 // import { WebSocketServer } from "ws";
-import path, { dirname, parse } from "path";
+import path from "path";
+import { instrument } from "@socket.io/admin-ui";
 
 import { Server } from "socket.io";
 
@@ -25,7 +26,8 @@ const publicRoomsHandler = () => {
 };
 
 // 방 인원수 체크
-const countRoom = (roomName) => {
+const countUsers = (roomName) => {
+  console.log(roomName);
   return wsServer.sockets.adapter.rooms.get(roomName)?.size;
 };
 
@@ -45,7 +47,17 @@ const handlerListen = () => console.log(`Listening on ws://localhost:3000`);
 // http server
 const httpServer = http.createServer(app);
 // const io = socketIO(server);
-const wsServer = new Server(httpServer);
+const wsServer = new Server(httpServer, {
+  cors: {
+    origin: ["https://admin.socket.io"],
+    credentials: true,
+  },
+});
+
+instrument(wsServer, {
+  // 패스워드 설정
+  auth: false,
+});
 
 // 임의의 6자리 코드 생성
 const randomHash = () => {
@@ -63,13 +75,18 @@ wsServer.on("connection", (socket) => {
     console.log("socket event: ", e);
   });
 
+  wsServer.sockets.emit("room_change", publicRoomsHandler());
   // 입장
   socket.on("enter_room", ({ roomName }, done) => {
     socket.join(roomName);
-    done(socket.nickname);
+    done(socket.nickname, countUsers(roomName));
 
-    // 데이터를 하나의 소켓에 전송
-    socket.to(roomName).emit("welcome", socket.nickname, countRoom(roomName));
+    socket
+      .to(roomName)
+      .emit("enter_room", socket.nickname, countUsers(roomName));
+
+    // 데이터를 하나의(특정방) 소켓에 전송
+    socket.to(roomName).emit("welcome", socket.nickname, countUsers(roomName));
 
     // 데이터를(현재 public room) 모든 소켓에게 전송
     wsServer.sockets.emit("room_change", publicRoomsHandler());
@@ -78,7 +95,7 @@ wsServer.on("connection", (socket) => {
   // 퇴장 (소켓이 방을 떠나기 직전)
   socket.on("disconnecting", () => {
     socket.rooms.forEach((room) => {
-      socket.to(room).emit("bye", socket.nickname, countRoom(room) - 1);
+      socket.to(room).emit("bye", socket.nickname, countUsers(room) - 1);
     });
   });
 
