@@ -27,7 +27,6 @@ const publicRoomsHandler = () => {
 
 // 방 인원수 체크
 const countUsers = (roomName) => {
-  console.log(roomName);
   return wsServer.sockets.adapter.rooms.get(roomName)?.size;
 };
 
@@ -69,9 +68,7 @@ wsServer.on("connection", (socket) => {
   // 초기 닉네임
   socket["nickname"] = `손님#${randomCode}`;
 
-  console.log(socket.nickname);
   socket.onAny((e) => {
-    console.log(wsServer.sockets.adapter);
     console.log("socket event: ", e);
   });
 

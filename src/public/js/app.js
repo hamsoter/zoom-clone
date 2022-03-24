@@ -39,7 +39,7 @@ const handleNicknameSubmit = (e) => {
   // 나한테만 보이는 이유가...? emit이라서군아
   socket.emit("nickname", input.value, () => {
     addMessage(
-      `당신의 닉네임은 변경되었다! ( ﾉ ﾟｰﾟ)ﾉ ( ${prevNickname} => ${value} )`
+      `- 당신의 닉네임은 변경되었다! ( ﾉ ﾟｰﾟ)ﾉ (${prevNickname} => ${value}) -`
     );
     prevNickname = value;
   });
@@ -50,6 +50,7 @@ const showRoom = (userNickname, userCount) => {
   welcome.hidden = true;
   room.hidden = false;
 
+  prevNickname = userNickname;
   setTitle(roomName, userCount);
 
   const msgForm = room.querySelector("#msg");
@@ -59,7 +60,7 @@ const showRoom = (userNickname, userCount) => {
   nicknameForm.addEventListener("submit", handleNicknameSubmit);
 
   // 입장자만 보임
-  addMessage(`당신은 ${roomName}에 입장했습니다. `);
+  addMessage(`- 당신은 ${roomName}에 입장했습니다. -`);
 };
 
 const handleRoomSubmit = (e) => {
@@ -78,12 +79,12 @@ form.addEventListener("submit", handleRoomSubmit);
 
 socket.on("welcome", (nickname, userCount) => {
   setTitle(roomName, userCount);
-  addMessage(`${nickname}(이)가 ${roomName}에 입장했습니다.`);
+  addMessage(`- ${nickname}(이)가 ${roomName}에 입장했습니다. -`);
 });
 
 socket.on("bye", (nickname, userCount) => {
   setTitle(roomName, userCount);
-  addMessage(`${nickname}(이)가 ${roomName}을(를) 떠났습니다.`);
+  addMessage(`- ${nickname}(이)가 ${roomName}을(를) 떠났습니다. -`);
 });
 
 socket.on("new_message", (msg, nickname) => {
