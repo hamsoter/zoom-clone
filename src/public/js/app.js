@@ -6,10 +6,14 @@ const muteBtn = document.getElementById("mute");
 const cameraBtn = document.getElementById("camera");
 const camerasSelect = document.getElementById("cameras");
 
-let myStream;
+const call = document.getElementById("call");
 
+call.hidden = true;
+
+let myStream;
 let muted = false;
 let cameraOff = false;
+let roomName;
 
 const getCameras = async () => {
   try {
@@ -67,8 +71,6 @@ const getMedia = async (deviceId) => {
   }
 };
 
-getMedia();
-
 const HandlerCameraBtn = () => {
   myStream.getVideoTracks().forEach((track) => {
     track.enabled = !track.enabled;
@@ -113,3 +115,31 @@ cameraBtn.style.border = "2px solid crimson";
 
 muteBtn.addEventListener("click", HandlerMuteClick);
 cameraBtn.addEventListener("click", HandlerCameraBtn);
+
+// 방 생성 및 입장 (socket으로 서버와 통신)
+const welcome = document.getElementById("welcome");
+const welcomeForm = welcome.querySelector("form");
+
+const startMedia = () => {
+  welcomeForm.hidden = true;
+  call.hidden = false;
+  getMedia();
+};
+
+const handleWelcomeSubmit = (e) => {
+  e.preventDefault();
+  const input = e.target.querySelector("input");
+
+  console.log(input.value);
+
+  socket.emit("join_room", input.value, startMedia);
+  roomName = input.value;
+  input.value = "";
+};
+
+welcomeForm.addEventListener("submit", handleWelcomeSubmit);
+
+// 타인의 방 입장 이벤트
+socket.on("welcome", () => {
+  console.log("누군가가 들어옴");
+});

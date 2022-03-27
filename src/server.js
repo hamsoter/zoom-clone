@@ -32,6 +32,15 @@ const wsServer = new Server(httpServer, {
   },
 });
 
+wsServer.on("connection", (socket) => {
+  socket.on("join_room", (roomName, done) => {
+    socket.join(roomName);
+    done();
+    // 타인의 입장 테스트
+    socket.to(roomName).emit("welcome");
+  });
+});
+
 instrument(wsServer, {
   // 패스워드 설정
   auth: false,
