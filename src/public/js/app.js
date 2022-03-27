@@ -119,20 +119,20 @@ cameraBtn.addEventListener("click", HandlerCameraBtn);
 const welcome = document.getElementById("welcome");
 const welcomeForm = welcome.querySelector("form");
 
-const startMedia = async () => {
+const initCall = async () => {
   welcomeForm.hidden = true;
   call.hidden = false;
   await getMedia();
   makeConnection();
 };
 
-const handleWelcomeSubmit = (e) => {
+const handleWelcomeSubmit = async (e) => {
   e.preventDefault();
   const input = e.target.querySelector("input");
 
   console.log(input.value);
-
-  socket.emit("join_room", input.value, startMedia);
+  await initCall();
+  socket.emit("join_room", input.value);
   roomName = input.value;
   input.value = "";
 };
@@ -150,15 +150,25 @@ socket.on("welcome", async () => {
 });
 
 // Peer B에서 실행
-socket.on("offer", (offer) => {
-  console.log(offer);
+socket.on("offer", async (offer) => {
+  // console.log(offer);
+  myPeerConnection.setRemoteDescription(offer);
+
+  const answer = await myPeerConnection.createAnswer();
+  console.log(answer);
+  myPeerConnection.setLocalDescription(answer);
+
+  socket.emit("answer", answer, roomName);
+});
+
+socket.on("answer", (answer) => {
+  myPeerConnection.setRemoteDescription(answer);
 });
 
 // RTC 연결
 const makeConnection = () => {
   myPeerConnection = new RTCPeerConnection();
 
-  console.log(myStream);
   // myPeerConnection에 전송할 mediaTrack들 담기
   myStream
     .getTracks()
