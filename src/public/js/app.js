@@ -146,12 +146,12 @@ socket.on("welcome", async () => {
   myPeerConnection.setLocalDescription(offer);
 
   socket.emit("offer", offer, roomName);
-  console.log("offer를 보냈음");
+  console.log("A: offer를 보냈음");
 });
 
 // Peer B에서 실행
 socket.on("offer", async (offer) => {
-  // console.log(offer);
+  console.log("B: offer를 받음");
   myPeerConnection.setRemoteDescription(offer);
 
   const answer = await myPeerConnection.createAnswer();
@@ -159,18 +159,42 @@ socket.on("offer", async (offer) => {
   myPeerConnection.setLocalDescription(answer);
 
   socket.emit("answer", answer, roomName);
+  console.log("B: answer를 보냈음");
 });
 
 socket.on("answer", (answer) => {
+  console.log("A: answer를 받았음");
+
   myPeerConnection.setRemoteDescription(answer);
+});
+
+socket.on("ice", (ice) => {
+  console.log("candidate받음");
+  console.log(ice);
+  myPeerConnection.addIceCandidate(ice);
 });
 
 // RTC 연결
 const makeConnection = () => {
   myPeerConnection = new RTCPeerConnection();
+  myPeerConnection.addEventListener("icecandidate", handleIce);
+
+  myPeerConnection.addEventListener("addstream", handleAddStream);
 
   // myPeerConnection에 전송할 mediaTrack들 담기
   myStream
     .getTracks()
     .forEach((track) => myPeerConnection.addTrack(track, myStream));
+};
+
+const handleIce = (data) => {
+  console.log("candidate 보냄");
+  socket.emit("ice", data.candidate, roomName);
+  console.log("canditate!!!!");
+};
+
+const handleAddStream = (data) => {
+  console.log("got an event from my peer");
+  console.log("Peer's Stream: ", data.stream);
+  console.log(myStream);
 };
