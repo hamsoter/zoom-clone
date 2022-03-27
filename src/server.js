@@ -39,6 +39,10 @@ wsServer.on("connection", (socket) => {
     // 타인의 입장 테스트
     socket.to(roomName).emit("welcome");
   });
+
+  socket.on("offer", (offer, roomName) => {
+    socket.to(roomName).emit("offer", offer);
+  });
 });
 
 instrument(wsServer, {

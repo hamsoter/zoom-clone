@@ -14,6 +14,7 @@ let myStream;
 let muted = false;
 let cameraOff = false;
 let roomName;
+let myPeerConnection;
 
 const getCameras = async () => {
   try {
@@ -22,8 +23,6 @@ const getCameras = async () => {
 
     // stream에 인식된 카메라를 집어냄
     const currentCamera = myStream.getVideoTracks()[0];
-
-    console.log(currentCamera);
 
     cameras.forEach((camera) => {
       const option = document.createElement("option");
@@ -120,10 +119,11 @@ cameraBtn.addEventListener("click", HandlerCameraBtn);
 const welcome = document.getElementById("welcome");
 const welcomeForm = welcome.querySelector("form");
 
-const startMedia = () => {
+const startMedia = async () => {
   welcomeForm.hidden = true;
   call.hidden = false;
-  getMedia();
+  await getMedia();
+  makeConnection();
 };
 
 const handleWelcomeSubmit = (e) => {
@@ -139,7 +139,28 @@ const handleWelcomeSubmit = (e) => {
 
 welcomeForm.addEventListener("submit", handleWelcomeSubmit);
 
-// 타인의 방 입장 이벤트
-socket.on("welcome", () => {
-  console.log("누군가가 들어옴");
+// 타인의 방 입장 이벤트 (Peer A에서 실행)
+socket.on("welcome", async () => {
+  // 연결을 위한 나의 고유 offer setting
+  const offer = await myPeerConnection.createOffer();
+  myPeerConnection.setLocalDescription(offer);
+
+  socket.emit("offer", offer, roomName);
+  console.log("offer를 보냈음");
 });
+
+// Peer B에서 실행
+socket.on("offer", (offer) => {
+  console.log(offer);
+});
+
+// RTC 연결
+const makeConnection = () => {
+  myPeerConnection = new RTCPeerConnection();
+
+  console.log(myStream);
+  // myPeerConnection에 전송할 mediaTrack들 담기
+  myStream
+    .getTracks()
+    .forEach((track) => myPeerConnection.addTrack(track, myStream));
+};
