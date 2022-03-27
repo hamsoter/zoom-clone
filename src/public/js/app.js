@@ -11,8 +11,8 @@ const call = document.getElementById("call");
 call.hidden = true;
 
 let myStream;
-let muted = false;
-let cameraOff = false;
+let muted = true;
+let cameraOff = true;
 let roomName;
 let myPeerConnection;
 
@@ -41,8 +41,20 @@ const getCameras = async () => {
   }
 };
 
-camerasSelect.addEventListener("input", (e) => {
-  getMedia(e.target.value);
+camerasSelect.addEventListener("input", async (e) => {
+  await getMedia(e.target.value);
+
+  if (myPeerConnection) {
+    const newVideoTrack = myStream.getVideoTracks()[0];
+
+    console.log(newVideoTrack);
+    const videoSender = myPeerConnection
+      .getSenders()
+      .find((sender) => sender.track.kind === "video");
+
+    console.log(videoSender);
+    videoSender.replaceTrack(newVideoTrack);
+  }
 });
 
 const getMedia = async (deviceId) => {
@@ -76,12 +88,12 @@ const HandlerCameraBtn = () => {
     console.log(track.enabled);
   });
   if (!cameraOff) {
-    cameraBtn.innerHTML = "카메라 켜기";
+    cameraBtn.innerHTML = "카메라 켜짐상태";
     cameraBtn.style.background = "";
     cameraBtn.style.border = "";
     cameraOff = true;
   } else {
-    cameraBtn.innerHTML = "카메라 끄기";
+    cameraBtn.innerHTML = "카메라 꺼짐상태";
     cameraBtn.style.background = "crimson";
     cameraBtn.style.border = "2px solid crimson";
     cameraOff = false;
@@ -89,28 +101,27 @@ const HandlerCameraBtn = () => {
 };
 
 const HandlerMuteClick = () => {
-  myStream.getAudioTracks().forEach((track) => {
-    track.enabled = !track.enabled;
-    console.log(track.enabled);
-  });
+  myStream
+    .getAudioTracks()
+    .forEach((track) => (track.enabled = !track.enabled));
 
   if (!muted) {
-    muteBtn.innerHTML = "마이크 켜기";
+    muteBtn.innerHTML = "마이크 켜짐상태";
     muteBtn.style.background = "";
     muteBtn.style.border = "";
     muted = true;
   } else {
-    muteBtn.innerHTML = "마이크 끄기";
+    muteBtn.innerHTML = "마이크 꺼짐상태";
     muteBtn.style.background = "crimson";
     muteBtn.style.border = "2px solid crimson";
     muted = false;
   }
 };
 
-muteBtn.style.background = "crimson";
-muteBtn.style.border = "2px solid crimson";
-cameraBtn.style.background = "crimson";
-cameraBtn.style.border = "2px solid crimson";
+muteBtn.style.background = "";
+muteBtn.style.border = "";
+cameraBtn.style.background = "";
+cameraBtn.style.border = "";
 
 muteBtn.addEventListener("click", HandlerMuteClick);
 cameraBtn.addEventListener("click", HandlerCameraBtn);
@@ -123,6 +134,9 @@ const initCall = async () => {
   welcomeForm.hidden = true;
   call.hidden = false;
   await getMedia();
+  HandlerCameraBtn();
+  HandlerMuteClick();
+
   makeConnection();
 };
 
@@ -176,10 +190,30 @@ socket.on("ice", (ice) => {
 
 // RTC 연결
 const makeConnection = () => {
-  myPeerConnection = new RTCPeerConnection();
+  myPeerConnection = new RTCPeerConnection({
+    iceServers: [
+      {
+        urls: [
+          "stun:stun.l.google.com:19302",
+          "stun:stun1.l.google.com:19302",
+          "stun:stun2.l.google.com:19302",
+          "stun:stun3.l.google.com:19302",
+          "stun:stun4.l.google.com:19302",
+        ],
+      },
+    ],
+  });
   myPeerConnection.addEventListener("icecandidate", handleIce);
 
-  myPeerConnection.addEventListener("addstream", handleAddStream);
+  // myPeerConnection.addEventListener("addstream", handleAddStream);
+
+  myPeerConnection.addEventListener("track", handleTrack);
+
+  function handleTrack(data) {
+    console.log("handle track");
+    const peerFace = document.querySelector("#peerFace");
+    peerFace.srcObject = data.streams[0];
+  }
 
   // myPeerConnection에 전송할 mediaTrack들 담기
   myStream
@@ -193,8 +227,8 @@ const handleIce = (data) => {
   console.log("canditate!!!!");
 };
 
+// 스트림이 정상적으로 교환된 후
 const handleAddStream = (data) => {
-  console.log("got an event from my peer");
-  console.log("Peer's Stream: ", data.stream);
-  console.log(myStream);
+  const peerFace = document.getElementById("peerFace");
+  peerFace.srcObject = data.stream;
 };
